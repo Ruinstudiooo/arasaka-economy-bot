@@ -55,7 +55,17 @@ export class GitHubFile {
 	}
 
 	async fetchOnce(force) {
-		const response = await fetch(this.url, { headers: this.headers })
+		let response = await fetch(this.url, { headers: this.headers })
+
+		// raw.githubusercontent sits behind a cdn and a path that 404d once can
+		// keep answering 404 for a while after the file exists. the api is not
+		// cached that way, so it gets the second look.
+		if (response.status === 404 && !this.token) {
+			response = await fetch(
+				`https://api.github.com/repos/${this.repo}/contents/${this.path}?ref=${encodeURIComponent(this.branch)}`,
+				{ headers: { accept: 'application/vnd.github.raw', 'user-agent': 'arasaka-economy-bot' } },
+			)
+		}
 
 		if (response.status === 304 && this.cache) {
 			this.cache.at = Date.now()
