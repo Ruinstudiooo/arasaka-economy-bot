@@ -4,6 +4,9 @@ import { config } from '../config.js'
  * one json file out of a github repo, cached. public repos go through
  * raw.githubusercontent, private ones through the api with a token, both hand
  * back the same thing.
+ *
+ * aradata is private, so in practice this always needs GITHUB_TOKEN. the raw
+ * path stays because a fork or a copy of the data may well be public.
  */
 export class GitHubFile {
 	constructor(options = {}) {
@@ -76,9 +79,11 @@ export class GitHubFile {
 			const body = await response.text().catch(() => '')
 			const hint =
 				response.status === 404
-					? ` (is ${this.path} on ${this.branch} in ${this.repo}?)`
+					? this.token
+						? ` (is ${this.path} on ${this.branch} in ${this.repo}?)`
+						: ` (private repo needs GITHUB_TOKEN, or check ${this.path} exists on ${this.branch})`
 					: response.status === 401 || response.status === 403
-						? ' (if the repo is private set GITHUB_TOKEN)'
+						? ' (GITHUB_TOKEN is wrong, expired, or cannot read that repo)'
 						: ''
 
 			throw new Error(`github ${response.status} for ${this.source}${hint}${body ? `: ${body.slice(0, 200)}` : ''}`)

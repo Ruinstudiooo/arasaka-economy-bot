@@ -107,11 +107,16 @@ the bot reads `data/economy.json` from the `aradata` repo on github.
 ARADATA_REPO=Ruinstudiooo/aradata
 ARADATA_BRANCH=main
 ARADATA_PATH=data/economy.json
+GITHUB_TOKEN=ghp_...
 ```
 
-public repo needs nothing else. private repo needs `GITHUB_TOKEN`. the file is
-cached for 60 seconds, `ARADATA_TTL` changes that, `client.aradata.invalidate()`
-drops it early.
+that repo is private, so `GITHUB_TOKEN` is required. a read only fine grained
+token works, or a classic one with `repo`. without it the bot starts fine and
+then every data read fails with a 404, because github hides the repo instead of
+saying no.
+
+the file is cached for 60 seconds, `ARADATA_TTL` changes that,
+`client.aradata.invalidate()` drops it early.
 
 ```js
 await client.aradata.top(10)
