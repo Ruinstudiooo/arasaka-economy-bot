@@ -52,6 +52,7 @@ import { SlashCommandBuilder } from 'discord.js'
 import { Command } from '../structures/Command.js'
 import { card } from '../ui/components.js'
 import { money, theme } from '../ui/theme.js'
+import { toNumber, toUserId } from '../handlers/args.js'
 
 export default new Command({
 	name: 'pay',
@@ -69,12 +70,20 @@ export default new Command({
 		.addIntegerOption(option => option.setName('amount').setDescription('how much').setRequired(true)),
 
 	async execute(ctx) {
-		const [target, amount] = ctx.args
+		const target = toUserId(ctx.args[0])
+		const amount = toNumber(ctx.args[1])
+
+		if (!target || !amount) {
+			await ctx.reply(card({ title: 'pay', body: '`!pay @someone 500`', accent: theme.bad }))
+			return
+		}
+
+		const moved = await ctx.client.economy.transfer(ctx.user.id, target, amount)
 
 		await ctx.reply(
 			card({
 				title: 'transfer',
-				body: `sending ${money(amount)} to ${target}`,
+				body: `sent **${money(moved.amount)}** to <@${target}>\nyou have ${money(moved.payer.balance)} left`,
 				accent: theme.accent,
 			}),
 		)
@@ -85,6 +94,37 @@ export default new Command({
 args come in the same order for both entry points, so `execute` never checks
 where it was called from. `ctx.user`, `ctx.member`, `ctx.guild`, `ctx.channel`,
 `ctx.reply()` and `ctx.followUp()` are there too.
+
+## one wallet, every server
+
+the economy is global, the same way owo runs it. a balance belongs to a discord
+user id, not to a server, so someone who earns in one guild can spend it in
+another and never has two purses to keep straight.
+
+`src/services/economy.js` has no guild argument anywhere and that is on purpose:
+
+```js
+await ctx.client.economy.balance(userId)          // same number everywhere
+await ctx.client.economy.give(userId, 500)        // +500, counted as earned
+await ctx.client.economy.give(userId, -200)       // takes it back, earned untouched
+await ctx.client.economy.transfer(from, to, 100)  // both halves in one commit
+await ctx.client.economy.patch(userId, { streak: 5 })
+await ctx.client.economy.top(10)                  // global leaderboard
+await ctx.client.economy.position(userId)         // { place, of }
+```
+
+a server only ever shows up as a filter on that list. if you want a per server
+leaderboard later, filter `top()` results by membership at display time, do not
+store a second balance.
+
+read and write go through the same file, so a payment is one commit, not two.
+`update()` re-reads the file before every write and retries on a sha conflict,
+which means two commands finishing at the same second add up instead of one of
+them winning.
+
+if a file ever shows up with `{ "guilds": { ... } }` in it, `normalize()` adds
+the purses together into one entry per person before anything else sees it, and
+the next write saves it back flat.
 
 ## cards
 

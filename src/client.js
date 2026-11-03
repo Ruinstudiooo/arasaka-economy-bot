@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path'
 import { loadCommands } from './handlers/commands.js'
 import { loadEvents } from './handlers/events.js'
 import { aradata } from './services/aradata.js'
+import { economy } from './services/economy.js'
 import { log } from './utils/logger.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -25,6 +26,7 @@ export async function createClient() {
 
 	client.commands = await loadCommands(join(here, 'commands'))
 	client.aradata = aradata
+	client.economy = economy
 
 	const events = await loadEvents(client, join(here, 'events'))
 

@@ -52,8 +52,6 @@ export const config = {
 	ownerIds: list(env('OWNER_IDS')),
 	prefixes: list(env('PREFIX') || '!'),
 
-	ledgerFile: env('LEDGER_FILE') || 'data/ledger.json',
-
 	aradata: {
 		repo: env('ARADATA_REPO') || 'Ruinstudiooo/aradata',
 		branch: env('ARADATA_BRANCH') || 'main',
