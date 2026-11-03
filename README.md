@@ -124,6 +124,18 @@ await client.aradata.player(userId)
 await client.aradata.totals()
 ```
 
+## icon
+
+`assets/icon.png` is the avatar, 1024 square. it is drawn by
+`assets/make-icon.py` with cairo, so a colour change is one line and a rerun:
+
+```sh
+python3 assets/make-icon.py
+```
+
+nothing here came out of an image model, it is circles, ticks and two glyphs.
+drafts that did not make it are in `assets/alternates/`.
+
 ## notes
 
 - no commands are committed yet, the folder is empty on purpose
